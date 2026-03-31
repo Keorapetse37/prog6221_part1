@@ -8,15 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest # Required for System.Media dependencies
+    runs-on: windows-latest 
 
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 10.0.x # Change to your targeted .NET version if different
+        dotnet-version: 10.0.x 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore CyberBot
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build CyberBot --no-restore
