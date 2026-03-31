@@ -7,7 +7,7 @@ This is a console-based virtual assistant designed to educate South African citi
 ### Prerequisites
 * **Operating System:** Windows (Required for the `System.Media` audio playback).
 * **IDE:** Visual Studio 2022 (or newer).
-* **Framework:** .NET 8.0 SDK (or newer).
+* **Framework:** .NET 10.0 SDK (or newer).
 
 ### Step-by-Step Instructions
 
