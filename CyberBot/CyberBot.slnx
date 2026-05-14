@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="CyberBot/CyberBot.csproj" />
+  <Project Path="CyberBot_GUI/CyberBot_GUI.csproj" Id="25fa1125-cfc7-4ece-a1c5-b908be2d5d07" />
 </Solution>
