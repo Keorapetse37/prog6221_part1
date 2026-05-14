@@ -71,4 +71,5 @@ namespace CyberBot_GUI
             ChatBox.Items.Add(""); 
         }
     }
+
 }
