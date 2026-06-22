@@ -9,11 +9,12 @@ namespace CyberBot_GUI
     {
         private ChatbotLogic botLogic;
         private TaskRepository taskRepo = new TaskRepository();
+        private ActivityLogger activityLog = new ActivityLogger();
 
         public MainWindow()
         {
             InitializeComponent();
-            botLogic = new ChatbotLogic(new BotResponseHandler(DisplayBotMessage));
+            botLogic = new ChatbotLogic(new BotResponseHandler(DisplayBotMessage), activityLog);
             AsciiHeader.Text = @"
   ___      _               ___       _   
  / __|_  _| |__  ___ _ _  | _ ) ___ | |_ 
