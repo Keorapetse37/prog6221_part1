@@ -17,7 +17,12 @@ namespace CyberBot_GUI
         public MainWindow()
         {
             InitializeComponent();
-            botLogic = new ChatbotLogic(new BotResponseHandler(DisplayBotMessage), activityLog);
+            botLogic = new ChatbotLogic(
+                new BotResponseHandler(DisplayBotMessage),
+                activityLog,
+                taskRepo,
+                StartQuizFromChat,
+                RefreshTaskList);
             AsciiHeader.Text = @"
   ___      _               ___       _   
  / __|_  _| |__  ___ _ _  | _ ) ___ | |_ 
@@ -76,7 +81,7 @@ namespace CyberBot_GUI
             ChatBox.Items.Add("");
         }
 
-        // ===== Tasks tab =====
+        
 
         private void RefreshTaskList()
         {
@@ -145,10 +150,15 @@ namespace CyberBot_GUI
             }
         }
 
-        // ===== Quiz tab =====
-
-        // Convenience: the four option buttons as an array so we can loop them
+       
         private Button[] OptionButtons => new[] { QuizOption0, QuizOption1, QuizOption2, QuizOption3 };
+
+        
+        private void StartQuizFromChat()
+        {
+            QuizTab.IsSelected = true;          
+            StartQuizButton_Click(this, new RoutedEventArgs());
+        }
 
         private void StartQuizButton_Click(object sender, RoutedEventArgs e)
         {
@@ -158,7 +168,7 @@ namespace CyberBot_GUI
             DisplayCurrentQuestion();
         }
 
-        // Show the current question and set up the answer buttons
+       
         private void DisplayCurrentQuestion()
         {
             QuizQuestion q = quizManager.GetCurrentQuestion();

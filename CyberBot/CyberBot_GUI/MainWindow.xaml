@@ -97,8 +97,8 @@
                 </Grid>
             </TabItem>
 
-           
-            <TabItem Header="Quiz">
+
+            <TabItem Header="Quiz" x:Name="QuizTab">
                 <Grid Margin="15">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>

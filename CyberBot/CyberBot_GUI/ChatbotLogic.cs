@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace CyberBot_GUI
 {
@@ -9,6 +10,11 @@ namespace CyberBot_GUI
     {
         private BotResponseHandler _onRespond;
         private ActivityLogger _activityLog;
+        private TaskRepository _taskRepo;
+
+       
+        private Action _onStartQuiz;
+        private Action _onTasksChanged;
 
         private string userName = string.Empty;
         private string currentTopic = string.Empty;
@@ -17,10 +23,14 @@ namespace CyberBot_GUI
         private Dictionary<string, string> keywordResponses = null!;
         private List<string> phishingTips = null!;
 
-        public ChatbotLogic(BotResponseHandler onRespond, ActivityLogger activityLog)
+        public ChatbotLogic(BotResponseHandler onRespond, ActivityLogger activityLog,
+                            TaskRepository taskRepo, Action onStartQuiz, Action onTasksChanged)
         {
             _onRespond = onRespond;
             _activityLog = activityLog;
+            _taskRepo = taskRepo;
+            _onStartQuiz = onStartQuiz;
+            _onTasksChanged = onTasksChanged;
             InitializeKnowledgeBase();
         }
 
@@ -43,9 +53,10 @@ namespace CyberBot_GUI
 
         public void ProcessUserInput(string input)
         {
-            input = input.Trim().ToLower();
+            string raw = input.Trim();            
+            string lower = raw.ToLower();          
 
-            if (string.IsNullOrWhiteSpace(input))
+            if (string.IsNullOrWhiteSpace(lower))
             {
                 _onRespond("I didn't quite catch that. Could you please type something?");
                 return;
@@ -53,25 +64,42 @@ namespace CyberBot_GUI
 
             if (string.IsNullOrEmpty(userName))
             {
-                userName = input;
-                _onRespond($"Nice to meet you, {userName}! What cybersecurity topic can I help you with today? (e.g., passwords, phishing, scams)");
+                userName = raw;
+                _onRespond($"Nice to meet you, {userName}! Ask me about a topic, add a task, or start the quiz. (e.g., \"remind me to enable 2FA in 3 days\")");
                 return;
             }
 
            
-            if (input.Contains("activity log") || input.Contains("what have you done") || input.Contains("show log"))
+            if (lower.Contains("activity log") || lower.Contains("what have you done") || lower.Contains("show log"))
             {
                 _onRespond(_activityLog.GetSummary());
                 return;
             }
 
-            if (DetectSentiment(input, out string sentimentResponse))
+           
+            if (lower.Contains("quiz") || lower.Contains("game") || lower.Contains("test me"))
+            {
+                _onRespond("Sure! Starting the cybersecurity quiz for you. Head to the Quiz tab if it doesn't jump there.");
+                _activityLog.Log("Quiz started via chat command.");
+                _onStartQuiz();
+                return;
+            }
+
+            
+            if (IsTaskIntent(lower))
+            {
+                HandleAddTaskIntent(raw, lower);
+                return;
+            }
+           
+
+            if (DetectSentiment(lower, out string sentimentResponse))
             {
                 _onRespond(sentimentResponse);
                 return;
             }
 
-            if (input.Contains("more") || input.Contains("another") || input.Contains("explain"))
+            if (lower.Contains("more") || lower.Contains("another") || lower.Contains("explain"))
             {
                 HandleFollowUp();
                 return;
@@ -79,7 +107,7 @@ namespace CyberBot_GUI
 
             foreach (var keyword in keywordResponses.Keys)
             {
-                if (input.Contains(keyword))
+                if (lower.Contains(keyword))
                 {
                     currentTopic = keyword;
                     favoriteTopic = keyword;
@@ -88,7 +116,7 @@ namespace CyberBot_GUI
                 }
             }
 
-            if (input.Contains("phishing"))
+            if (lower.Contains("phishing"))
             {
                 currentTopic = "phishing";
                 Random rand = new Random();
@@ -96,7 +124,94 @@ namespace CyberBot_GUI
                 return;
             }
 
-            _onRespond($"I'm still learning! You can ask me about passwords, phishing, scams, or privacy. As someone interested in {favoriteTopic}, what else would you like to know?");
+            _onRespond($"I'm still learning! You can ask me about passwords, phishing, scams or privacy, add a task, or start the quiz.");
+        }
+
+       
+        private bool IsTaskIntent(string lower)
+        {
+            return lower.Contains("add task") || lower.Contains("add a task")
+                || lower.Contains("remind me") || lower.Contains("set a reminder")
+                || lower.Contains("set reminder") || lower.Contains("create a task")
+                || lower.Contains("new task");
+        }
+
+        
+        private void HandleAddTaskIntent(string raw, string lower)
+        {
+            
+            int? reminderDays = ExtractReminderDays(lower);
+
+            
+            string title = ExtractTaskTitle(raw);
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                _onRespond("Sure — what task would you like me to add? (e.g., \"add a task to review privacy settings\")");
+                return;
+            }
+
+            var task = new TaskItem
+            {
+                Title = title,
+                Description = "Added via chat assistant."
+            };
+            if (reminderDays.HasValue)
+            {
+                task.ReminderDate = DateTime.Now.AddDays(reminderDays.Value);
+            }
+
+            _taskRepo.AddTask(task);
+
+            string reminderText = reminderDays.HasValue
+                ? $" I'll remind you in {reminderDays.Value} day(s)."
+                : " Would you like to set a reminder for it?";
+            _onRespond($"Task added: '{title}'.{reminderText}");
+
+            _activityLog.Log($"Task added via chat: '{title}'"
+                + (reminderDays.HasValue ? $" (reminder in {reminderDays.Value} days)" : " (no reminder)"));
+
+            _onTasksChanged();   
+        }
+
+       
+        private int? ExtractReminderDays(string lower)
+        {
+            Match m = Regex.Match(lower, @"in\s+(\d+)\s*day");
+            if (m.Success && int.TryParse(m.Groups[1].Value, out int days))
+            {
+                return days;
+            }
+            return null;
+        }
+
+        
+        private string ExtractTaskTitle(string raw)
+        {
+            string text = raw;
+
+           
+            text = Regex.Replace(text, @"\s*in\s+\d+\s*days?\s*", " ", RegexOptions.IgnoreCase);
+
+            
+            string[] commandPhrases =
+            {
+                "add a task to", "add a task", "add task to", "add task",
+                "create a task to", "create a task", "new task to", "new task",
+                "remind me to", "remind me", "set a reminder to", "set a reminder",
+                "set reminder to", "set reminder"
+            };
+
+            foreach (string phrase in commandPhrases)
+            {
+                if (text.ToLower().StartsWith(phrase))
+                {
+                    text = text.Substring(phrase.Length);
+                    break;
+                }
+            }
+
+            return text.Trim().TrimEnd('.', '!', '?');
         }
 
         private bool DetectSentiment(string input, out string response)
