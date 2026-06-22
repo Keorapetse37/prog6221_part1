@@ -8,6 +8,7 @@ namespace CyberBot_GUI
     public partial class MainWindow : Window
     {
         private ChatbotLogic botLogic;
+        private TaskRepository taskRepo = new TaskRepository();
 
         public MainWindow()
         {
@@ -36,11 +37,7 @@ namespace CyberBot_GUI
 
             DisplayBotMessage("Hello! Welcome to the Cybersecurity Awareness Bot. Please enter your name to get started:");
 
-            // ---- TEMPORARY: database connection test. Delete this block once it says "Connected". ----
-            TaskRepository repo = new TaskRepository();
-            repo.TestConnection(out string dbMsg);
-            DisplayBotMessage(dbMsg);
-            // -----------------------------------------------------------------------------------------
+            RefreshTaskList();
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
@@ -73,6 +70,71 @@ namespace CyberBot_GUI
         {
             ChatBox.Items.Add($"Bot: {message}");
             ChatBox.Items.Add("");
+        }
+
+        // ===== Tasks tab =====
+
+        // Reloads the task list from the database into the ListView
+        private void RefreshTaskList()
+        {
+            TaskListView.ItemsSource = null;
+            TaskListView.ItemsSource = taskRepo.GetAllTasks();
+        }
+
+        private void AddTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            string title = TaskTitleBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                MessageBox.Show("Please enter a task title.");
+                return;
+            }
+
+            var task = new TaskItem
+            {
+                Title = title,
+                Description = TaskDescBox.Text.Trim()
+            };
+
+            
+            if (int.TryParse(TaskReminderBox.Text.Trim(), out int days))
+            {
+                task.ReminderDate = DateTime.Now.AddDays(days);
+            }
+
+            taskRepo.AddTask(task);
+
+            
+            TaskTitleBox.Clear();
+            TaskDescBox.Clear();
+            TaskReminderBox.Clear();
+            RefreshTaskList();
+        }
+
+        private void CompleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (TaskListView.SelectedItem is TaskItem selected)
+            {
+                taskRepo.SetCompleted(selected.Id, true);
+                RefreshTaskList();
+            }
+            else
+            {
+                MessageBox.Show("Select a task first.");
+            }
+        }
+
+        private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (TaskListView.SelectedItem is TaskItem selected)
+            {
+                taskRepo.DeleteTask(selected.Id);
+                RefreshTaskList();
+            }
+            else
+            {
+                MessageBox.Show("Select a task first.");
+            }
         }
     }
 }
