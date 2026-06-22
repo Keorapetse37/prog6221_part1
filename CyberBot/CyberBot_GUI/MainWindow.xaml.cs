@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Media;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace CyberBot_GUI
@@ -10,6 +12,7 @@ namespace CyberBot_GUI
         private ChatbotLogic botLogic;
         private TaskRepository taskRepo = new TaskRepository();
         private ActivityLogger activityLog = new ActivityLogger();
+        private QuizManager quizManager = new QuizManager();
 
         public MainWindow()
         {
@@ -75,7 +78,6 @@ namespace CyberBot_GUI
 
         // ===== Tasks tab =====
 
-        // Reloads the task list from the database into the ListView
         private void RefreshTaskList()
         {
             TaskListView.ItemsSource = null;
@@ -97,7 +99,6 @@ namespace CyberBot_GUI
                 Description = TaskDescBox.Text.Trim()
             };
 
-            
             if (int.TryParse(TaskReminderBox.Text.Trim(), out int days))
             {
                 task.ReminderDate = DateTime.Now.AddDays(days);
@@ -105,7 +106,11 @@ namespace CyberBot_GUI
 
             taskRepo.AddTask(task);
 
-            
+            string reminderText = task.ReminderDate.HasValue
+                ? $" (reminder {task.ReminderDate.Value:yyyy-MM-dd})"
+                : " (no reminder)";
+            activityLog.Log($"Task added: '{task.Title}'{reminderText}");
+
             TaskTitleBox.Clear();
             TaskDescBox.Clear();
             TaskReminderBox.Clear();
@@ -117,6 +122,7 @@ namespace CyberBot_GUI
             if (TaskListView.SelectedItem is TaskItem selected)
             {
                 taskRepo.SetCompleted(selected.Id, true);
+                activityLog.Log($"Task completed: '{selected.Title}'");
                 RefreshTaskList();
             }
             else
@@ -130,11 +136,98 @@ namespace CyberBot_GUI
             if (TaskListView.SelectedItem is TaskItem selected)
             {
                 taskRepo.DeleteTask(selected.Id);
+                activityLog.Log($"Task deleted: '{selected.Title}'");
                 RefreshTaskList();
             }
             else
             {
                 MessageBox.Show("Select a task first.");
+            }
+        }
+
+        // ===== Quiz tab =====
+
+        // Convenience: the four option buttons as an array so we can loop them
+        private Button[] OptionButtons => new[] { QuizOption0, QuizOption1, QuizOption2, QuizOption3 };
+
+        private void StartQuizButton_Click(object sender, RoutedEventArgs e)
+        {
+            quizManager.Start();
+            activityLog.Log("Quiz started.");
+            StartQuizButton.Visibility = Visibility.Collapsed;
+            DisplayCurrentQuestion();
+        }
+
+        // Show the current question and set up the answer buttons
+        private void DisplayCurrentQuestion()
+        {
+            QuizQuestion q = quizManager.GetCurrentQuestion();
+
+            QuizScoreText.Text = $"Question {quizManager.CurrentQuestionNumber} of {quizManager.TotalQuestions}   |   Score: {quizManager.Score}";
+            QuizQuestionText.Text = q.QuestionText;
+            QuizFeedbackText.Text = "";
+            NextQuestionButton.Visibility = Visibility.Collapsed;
+
+            // Fill the buttons that have options; hide the rest
+            for (int i = 0; i < OptionButtons.Length; i++)
+            {
+                if (i < q.Options.Count)
+                {
+                    OptionButtons[i].Content = q.Options[i];
+                    OptionButtons[i].Visibility = Visibility.Visible;
+                    OptionButtons[i].IsEnabled = true;
+                }
+                else
+                {
+                    OptionButtons[i].Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private void QuizOption_Click(object sender, RoutedEventArgs e)
+        {
+            // Which button was clicked? Its Tag holds the option index
+            Button clicked = (Button)sender;
+            int chosenIndex = int.Parse(clicked.Tag.ToString());
+
+            bool correct = quizManager.SubmitAnswer(chosenIndex, out string explanation);
+
+            QuizFeedbackText.Text = correct
+                ? $"Correct! {explanation}"
+                : $"Not quite. {explanation}";
+
+            // Lock the buttons so they can't answer twice, then offer Next
+            foreach (Button b in OptionButtons)
+            {
+                b.IsEnabled = false;
+            }
+            QuizScoreText.Text = $"Question {quizManager.CurrentQuestionNumber} of {quizManager.TotalQuestions}   |   Score: {quizManager.Score}";
+            NextQuestionButton.Visibility = Visibility.Visible;
+        }
+
+        private void NextQuestionButton_Click(object sender, RoutedEventArgs e)
+        {
+            quizManager.MoveNext();
+
+            if (quizManager.IsFinished)
+            {
+                // Wrap up: show final score, hide the quiz controls, allow a restart
+                foreach (Button b in OptionButtons)
+                {
+                    b.Visibility = Visibility.Collapsed;
+                }
+                QuizQuestionText.Text = quizManager.GetFinalFeedback();
+                QuizFeedbackText.Text = "";
+                QuizScoreText.Text = "";
+                NextQuestionButton.Visibility = Visibility.Collapsed;
+                StartQuizButton.Content = "Restart Quiz";
+                StartQuizButton.Visibility = Visibility.Visible;
+
+                activityLog.Log($"Quiz completed. Score: {quizManager.Score}/{quizManager.TotalQuestions}.");
+            }
+            else
+            {
+                DisplayCurrentQuestion();
             }
         }
     }

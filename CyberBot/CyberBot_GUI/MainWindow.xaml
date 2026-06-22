@@ -9,7 +9,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ASCII header stays at the top, above the tabs -->
         <Border Grid.Row="0" Background="#1E293B" Padding="10">
             <TextBlock x:Name="AsciiHeader" FontFamily="Consolas" Foreground="#38BDF8"
                        TextAlignment="Center" FontSize="12"/>
@@ -17,7 +16,7 @@
 
         <TabControl Grid.Row="1" Margin="5" Background="White">
 
-            <!-- ===== CHAT TAB ( existing UI) ===== -->
+           
             <TabItem Header="Chat">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -45,7 +44,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- ===== TASKS TAB (new) ===== -->
+           
             <TabItem Header="Tasks">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -58,7 +57,6 @@
                     <TextBlock Grid.Row="0" Text="Cybersecurity Tasks" FontSize="18"
                                FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,10"/>
 
-                    <!-- Input row for adding a task -->
                     <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,0,0,10">
                         <TextBox x:Name="TaskTitleBox" Padding="5" Margin="0,0,0,5"
                                  FontSize="13" Tag="Task title"/>
@@ -74,7 +72,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- The task list -->
                     <ListView Grid.Row="2" x:Name="TaskListView" FontSize="13">
                         <ListView.View>
                             <GridView>
@@ -90,13 +87,64 @@
                         </ListView.View>
                     </ListView>
 
-                    <!-- Action buttons for the selected task -->
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
                         <Button x:Name="CompleteTaskButton" Content="Mark Complete" Width="110"
                                 Margin="0,0,10,0" Click="CompleteTaskButton_Click"/>
                         <Button x:Name="DeleteTaskButton" Content="Delete" Width="90"
                                 Background="#DC2626" Foreground="White"
                                 Click="DeleteTaskButton_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+           
+            <TabItem Header="Quiz">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Cybersecurity Quiz" FontSize="18"
+                               FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,5"/>
+
+                    <TextBlock Grid.Row="1" x:Name="QuizScoreText" FontSize="13"
+                               Foreground="#475569" Margin="0,0,0,10"/>
+
+                    <TextBlock Grid.Row="2" x:Name="QuizQuestionText" FontSize="15"
+                               TextWrapping="Wrap" Margin="0,0,0,12"
+                               Text="Press Start to begin the quiz!"/>
+
+                    <StackPanel Grid.Row="3" x:Name="QuizOptionsPanel">
+                        <Button x:Name="QuizOption0" Tag="0" Margin="0,0,0,6" Padding="8"
+                                HorizontalContentAlignment="Left" Click="QuizOption_Click"
+                                Visibility="Collapsed"/>
+                        <Button x:Name="QuizOption1" Tag="1" Margin="0,0,0,6" Padding="8"
+                                HorizontalContentAlignment="Left" Click="QuizOption_Click"
+                                Visibility="Collapsed"/>
+                        <Button x:Name="QuizOption2" Tag="2" Margin="0,0,0,6" Padding="8"
+                                HorizontalContentAlignment="Left" Click="QuizOption_Click"
+                                Visibility="Collapsed"/>
+                        <Button x:Name="QuizOption3" Tag="3" Margin="0,0,0,6" Padding="8"
+                                HorizontalContentAlignment="Left" Click="QuizOption_Click"
+                                Visibility="Collapsed"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="4" x:Name="QuizFeedbackText" FontSize="13"
+                               TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                    <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button x:Name="StartQuizButton" Content="Start Quiz" Width="100"
+                                Background="#0284C7" Foreground="White"
+                                Click="StartQuizButton_Click"/>
+                        <Button x:Name="NextQuestionButton" Content="Next" Width="100"
+                                Margin="10,0,0,0" Click="NextQuestionButton_Click"
+                                Visibility="Collapsed"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
