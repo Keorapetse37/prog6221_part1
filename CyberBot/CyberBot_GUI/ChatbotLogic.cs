@@ -13,8 +13,8 @@ namespace CyberBot_GUI
         private string currentTopic = string.Empty;
         private string favoriteTopic = string.Empty;
 
-        private Dictionary<string, string> keywordResponses;
-        private List<string> phishingTips;
+        private Dictionary<string, string> keywordResponses = null!;
+        private List<string> phishingTips = null!;
 
         public ChatbotLogic(BotResponseHandler onRespond)
         {

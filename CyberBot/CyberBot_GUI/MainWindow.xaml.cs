@@ -12,9 +12,7 @@ namespace CyberBot_GUI
         public MainWindow()
         {
             InitializeComponent();
-
             botLogic = new ChatbotLogic(new BotResponseHandler(DisplayBotMessage));
-
             AsciiHeader.Text = @"
   ___      _               ___       _   
  / __|_  _| |__  ___ _ _  | _ ) ___ | |_ 
@@ -37,6 +35,12 @@ namespace CyberBot_GUI
             }
 
             DisplayBotMessage("Hello! Welcome to the Cybersecurity Awareness Bot. Please enter your name to get started:");
+
+            // ---- TEMPORARY: database connection test. Delete this block once it says "Connected". ----
+            TaskRepository repo = new TaskRepository();
+            repo.TestConnection(out string dbMsg);
+            DisplayBotMessage(dbMsg);
+            // -----------------------------------------------------------------------------------------
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
@@ -68,8 +72,7 @@ namespace CyberBot_GUI
         private void DisplayBotMessage(string message)
         {
             ChatBox.Items.Add($"Bot: {message}");
-            ChatBox.Items.Add(""); 
+            ChatBox.Items.Add("");
         }
     }
-
 }
