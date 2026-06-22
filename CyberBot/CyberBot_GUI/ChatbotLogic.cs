@@ -8,6 +8,7 @@ namespace CyberBot_GUI
     public class ChatbotLogic
     {
         private BotResponseHandler _onRespond;
+        private ActivityLogger _activityLog;
 
         private string userName = string.Empty;
         private string currentTopic = string.Empty;
@@ -16,9 +17,10 @@ namespace CyberBot_GUI
         private Dictionary<string, string> keywordResponses = null!;
         private List<string> phishingTips = null!;
 
-        public ChatbotLogic(BotResponseHandler onRespond)
+        public ChatbotLogic(BotResponseHandler onRespond, ActivityLogger activityLog)
         {
             _onRespond = onRespond;
+            _activityLog = activityLog;
             InitializeKnowledgeBase();
         }
 
@@ -55,7 +57,14 @@ namespace CyberBot_GUI
                 _onRespond($"Nice to meet you, {userName}! What cybersecurity topic can I help you with today? (e.g., passwords, phishing, scams)");
                 return;
             }
-            // 
+
+           
+            if (input.Contains("activity log") || input.Contains("what have you done") || input.Contains("show log"))
+            {
+                _onRespond(_activityLog.GetSummary());
+                return;
+            }
+
             if (DetectSentiment(input, out string sentimentResponse))
             {
                 _onRespond(sentimentResponse);
@@ -123,5 +132,4 @@ namespace CyberBot_GUI
             }
         }
     }
-
 }
